@@ -594,8 +594,8 @@ struct gfx_dirlist {
 struct gfx_readdir_rsp {
        int op_ret;
        int op_errno;
+       gfx_dict xdata; /* Extra data */
        gfx_dirlist *reply;
-        gfx_dict xdata; /* Extra data */
 };
 
 struct gfx_dirplist {
@@ -612,8 +612,8 @@ struct gfx_dirplist {
 struct gfx_readdirp_rsp {
        int op_ret;
        int op_errno;
-       gfx_dirplist *reply;
        gfx_dict xdata; /* Extra data */
+       gfx_dirplist *reply;
 };
 
 struct gfx_set_lk_ver_rsp {

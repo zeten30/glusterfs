@@ -233,16 +233,6 @@ int gf_server_check_getxattr_cmd (call_frame_t *frame, const char *name);
 void
 forget_inode_if_no_dentry (inode_t *inode);
 
-int
-unserialize_req_locklist (gfs3_setactivelk_req *req,
-                          lock_migration_info_t *lmi);
-
-int
-serialize_rsp_dirent (gf_dirent_t *entries, gfs3_readdir_rsp *rsp);
-
-int
-serialize_rsp_direntp (gf_dirent_t *entries, gfs3_readdirp_rsp *rsp);
-
 server_ctx_t*
 server_ctx_get (client_t *client, xlator_t *xlator);
 #endif /* !_SERVER_H */

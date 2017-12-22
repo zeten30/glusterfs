@@ -922,6 +922,48 @@ out:
 
 
 int
+serialize_rsp_direntp_v2 (gf_dirent_t *entries, gfx_readdirp_rsp *rsp)
+{
+        gf_dirent_t        *entry = NULL;
+        gfx_dirplist       *trav  = NULL;
+        gfx_dirplist       *prev  = NULL;
+        int                 ret   = -1;
+
+        GF_VALIDATE_OR_GOTO ("server", entries, out);
+        GF_VALIDATE_OR_GOTO ("server", rsp, out);
+
+        list_for_each_entry (entry, &entries->list, list) {
+                trav = GF_CALLOC (1, sizeof (*trav), gf_server_mt_dirent_rsp_t);
+                if (!trav)
+                        goto out;
+
+                trav->d_ino  = entry->d_ino;
+                trav->d_off  = entry->d_off;
+                trav->d_len  = entry->d_len;
+                trav->d_type = entry->d_type;
+                trav->name   = entry->d_name;
+
+                gfx_stat_from_iattx (&trav->stat, &entry->d_stat);
+                dict_to_xdr (entry->dict, &trav->dict);
+
+                if (prev)
+                        prev->nextentry = trav;
+                else
+                        rsp->reply = trav;
+
+                prev = trav;
+                trav = NULL;
+        }
+
+        ret = 0;
+out:
+        GF_FREE (trav);
+
+        return ret;
+}
+
+
+int
 serialize_rsp_dirent (gf_dirent_t *entries, gfs3_readdir_rsp *rsp)
 {
         gf_dirent_t   *entry = NULL;
@@ -929,8 +971,8 @@ serialize_rsp_dirent (gf_dirent_t *entries, gfs3_readdir_rsp *rsp)
         gfs3_dirlist  *prev  = NULL;
         int           ret    = -1;
 
-        GF_VALIDATE_OR_GOTO ("server", entries, out);
         GF_VALIDATE_OR_GOTO ("server", rsp, out);
+        GF_VALIDATE_OR_GOTO ("server", entries, out);
 
         list_for_each_entry (entry, &entries->list, list) {
                 trav = GF_CALLOC (1, sizeof (*trav), gf_server_mt_dirent_rsp_t);
@@ -953,6 +995,40 @@ serialize_rsp_dirent (gf_dirent_t *entries, gfs3_readdir_rsp *rsp)
 out:
         return ret;
 }
+
+int
+serialize_rsp_dirent_v2 (gf_dirent_t *entries, gfx_readdir_rsp *rsp)
+{
+        gf_dirent_t  *entry = NULL;
+        gfx_dirlist  *trav  = NULL;
+        gfx_dirlist  *prev  = NULL;
+        int           ret    = -1;
+
+        GF_VALIDATE_OR_GOTO ("server", rsp, out);
+        GF_VALIDATE_OR_GOTO ("server", entries, out);
+
+        list_for_each_entry (entry, &entries->list, list) {
+                trav = GF_CALLOC (1, sizeof (*trav), gf_server_mt_dirent_rsp_t);
+                if (!trav)
+                        goto out;
+                trav->d_ino  = entry->d_ino;
+                trav->d_off  = entry->d_off;
+                trav->d_len  = entry->d_len;
+                trav->d_type = entry->d_type;
+                trav->name   = entry->d_name;
+                if (prev)
+                        prev->nextentry = trav;
+                else
+                        rsp->reply = trav;
+
+                prev = trav;
+        }
+
+        ret = 0;
+out:
+        return ret;
+}
+
 
 
 int
@@ -992,16 +1068,51 @@ readdirp_rsp_cleanup (gfs3_readdirp_rsp *rsp)
 }
 
 int
-serialize_rsp_locklist (lock_migration_info_t *locklist,
-                               gfs3_getactivelk_rsp *rsp)
+readdir_rsp_cleanup_v2 (gfx_readdir_rsp *rsp)
 {
+        gfx_dirlist  *prev = NULL;
+        gfx_dirlist  *trav = NULL;
+
+        trav = rsp->reply;
+        prev = trav;
+        while (trav) {
+                trav = trav->nextentry;
+                GF_FREE (prev);
+                prev = trav;
+        }
+
+        return 0;
+}
+
+
+int
+readdirp_rsp_cleanup_v2 (gfx_readdirp_rsp *rsp)
+{
+        gfx_dirplist *prev = NULL;
+        gfx_dirplist *trav = NULL;
+
+        trav = rsp->reply;
+        prev = trav;
+        while (trav) {
+                trav = trav->nextentry;
+                GF_FREE (prev->dict.pairs.pairs_val);
+                GF_FREE (prev);
+                prev = trav;
+        }
+
+        return 0;
+}
+
+
+static int
+common_rsp_locklist (lock_migration_info_t *locklist,
+                     gfs3_locklist **reply) {
         lock_migration_info_t   *tmp    = NULL;
         gfs3_locklist           *trav   = NULL;
         gfs3_locklist           *prev   = NULL;
         int                     ret     = -1;
 
         GF_VALIDATE_OR_GOTO ("server", locklist, out);
-        GF_VALIDATE_OR_GOTO ("server", rsp, out);
 
         list_for_each_entry (tmp, &locklist->list, list) {
                 trav = GF_CALLOC (1, sizeof (*trav), gf_server_mt_lock_mig_t);
@@ -1035,7 +1146,7 @@ serialize_rsp_locklist (lock_migration_info_t *locklist,
                 if (prev)
                         prev->nextentry = trav;
                 else
-                        rsp->reply = trav;
+                        *reply = trav;
 
                 prev = trav;
                 trav = NULL;
@@ -1048,7 +1159,48 @@ out:
 }
 
 int
+serialize_rsp_locklist (lock_migration_info_t *locklist,
+                        gfs3_getactivelk_rsp *rsp)
+{
+        int ret = 0;
+
+        GF_VALIDATE_OR_GOTO ("server", rsp, out);
+        ret = common_rsp_locklist (locklist, &rsp->reply);
+out:
+        return ret;
+}
+int
+serialize_rsp_locklist_v2 (lock_migration_info_t *locklist,
+                           gfx_getactivelk_rsp *rsp)
+{
+        int ret = 0;
+
+        GF_VALIDATE_OR_GOTO ("server", rsp, out);
+        ret = common_rsp_locklist (locklist, &rsp->reply);
+out:
+        return ret;
+}
+
+
+int
 getactivelkinfo_rsp_cleanup (gfs3_getactivelk_rsp  *rsp)
+{
+        gfs3_locklist  *prev = NULL;
+        gfs3_locklist  *trav = NULL;
+
+        trav = rsp->reply;
+        prev = trav;
+
+        while (trav) {
+                trav = trav->nextentry;
+                GF_FREE (prev);
+                prev = trav;
+        }
+
+        return 0;
+}
+int
+getactivelkinfo_rsp_cleanup_v2 (gfx_getactivelk_rsp  *rsp)
 {
         gfs3_locklist  *prev = NULL;
         gfs3_locklist  *trav = NULL;
@@ -1321,6 +1473,43 @@ server_inode_new (inode_table_t *itable, uuid_t gfid) {
 
 int
 unserialize_req_locklist (gfs3_setactivelk_req *req,
+                          lock_migration_info_t *lmi)
+{
+        struct gfs3_locklist            *trav      = NULL;
+        lock_migration_info_t           *temp    = NULL;
+        int                             ret       = -1;
+
+        trav = req->request;
+
+        INIT_LIST_HEAD (&lmi->list);
+
+        while (trav) {
+                temp = GF_CALLOC (1, sizeof (*lmi), gf_common_mt_lock_mig);
+                if (temp == NULL) {
+                        gf_msg (THIS->name, GF_LOG_ERROR, 0, 0, "No memory");
+                        goto out;
+                }
+
+                INIT_LIST_HEAD (&temp->list);
+
+                gf_proto_flock_to_flock (&trav->flock, &temp->flock);
+
+                temp->lk_flags = trav->lk_flags;
+
+                temp->client_uid =  gf_strdup (trav->client_uid);
+
+                list_add_tail (&temp->list, &lmi->list);
+
+                trav = trav->nextentry;
+        }
+
+        ret = 0;
+out:
+        return ret;
+}
+
+int
+unserialize_req_locklist_v2 (gfx_setactivelk_req *req,
                           lock_migration_info_t *lmi)
 {
         struct gfs3_locklist            *trav      = NULL;

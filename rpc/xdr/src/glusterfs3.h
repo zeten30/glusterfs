@@ -458,8 +458,9 @@ gfx_stat_to_iattx (struct gfx_iattx *gf_stat, struct iatt *iatt)
 	iatt->ia_btime_nsec = gf_stat->ia_btime_nsec ;
         iatt->ia_attributes = gf_stat->ia_attributes;
         iatt->ia_attributes_mask = gf_stat->ia_attributes_mask;
-	iatt->ia_type = ia_type_from_st_mode (gf_stat->mode) ;
-	iatt->ia_prot = ia_prot_from_st_mode (gf_stat->mode) ;
+
+	iatt->ia_type = ia_type_from_st_mode (gf_stat->mode);
+	iatt->ia_prot = ia_prot_from_st_mode (gf_stat->mode);
 }
 
 
@@ -472,7 +473,7 @@ gfx_stat_from_iattx (struct gfx_iattx *gf_stat, struct iatt *iatt)
         memcpy (gf_stat->ia_gfid, iatt->ia_gfid, 16);
 	gf_stat->ia_ino = iatt->ia_ino ;
 	gf_stat->ia_dev = iatt->ia_dev ;
-	gf_stat->mode   = st_mode_from_ia (iatt->ia_prot, iatt->ia_type);
+
 	gf_stat->ia_nlink = iatt->ia_nlink ;
 	gf_stat->ia_uid = iatt->ia_uid ;
 	gf_stat->ia_gid = iatt->ia_gid ;
@@ -492,6 +493,8 @@ gfx_stat_from_iattx (struct gfx_iattx *gf_stat, struct iatt *iatt)
 	gf_stat->ia_btime_nsec = iatt->ia_btime_nsec ;
         gf_stat->ia_attributes = iatt->ia_attributes;
         gf_stat->ia_attributes_mask = iatt->ia_attributes_mask;
+
+        gf_stat->mode   = st_mode_from_ia (iatt->ia_prot, iatt->ia_type);
 }
 
 #endif /* !_GLUSTERFS3_H */

@@ -400,4 +400,26 @@ serialize_req_locklist (lock_migration_info_t *locklist,
 
 void
 client_compound_rsp_cleanup (gfs3_compound_rsp *rsp, int len);
+
+void
+clnt_getactivelk_rsp_cleanup_v2 (gfx_getactivelk_rsp *rsp);
+
+void
+clnt_setactivelk_req_cleanup_v2 (gfx_setactivelk_req *req);
+
+int
+serialize_req_locklist_v2 (lock_migration_info_t *locklist,
+                           gfx_setactivelk_req *req);
+
+int
+clnt_unserialize_rsp_locklist_v2 (xlator_t *this, struct gfx_getactivelk_rsp *rsp,
+                                  lock_migration_info_t *lmi);
+
+int unserialize_rsp_dirent_v2 (xlator_t *this, struct gfx_readdir_rsp *rsp,
+                            gf_dirent_t *entries);
+int unserialize_rsp_direntp_v2 (xlator_t *this, fd_t *fd,
+                             struct gfx_readdirp_rsp *rsp, gf_dirent_t *entries);
+
+int clnt_readdir_rsp_cleanup_v2 (gfx_readdir_rsp *rsp);
+int clnt_readdirp_rsp_cleanup_v2 (gfx_readdirp_rsp *rsp);
 #endif /* !_CLIENT_H */
