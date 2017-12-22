@@ -2215,17 +2215,15 @@ server_namelink_cbk (call_frame_t *frame,
                      int32_t op_ret, int32_t op_errno,
                      struct iatt *prebuf, struct iatt *postbuf, dict_t *xdata)
 {
-        gfs4_namelink_rsp       rsp        = {0,};
+        gfx_common_2iatt_rsp rsp        = {0,};
         rpcsvc_request_t    *req        = NULL;
 
-        GF_PROTOCOL_DICT_SERIALIZE (this, xdata, &rsp.xdata.xdata_val,
-                                    rsp.xdata.xdata_len, op_errno, out);
-
+        dict_to_xdr (xdata, &rsp.xdata);
         if (op_ret < 0)
                 goto out;
 
-        gf_stat_from_iatt (&rsp.preparent, prebuf);
-        gf_stat_from_iatt (&rsp.postparent, postbuf);
+        gfx_stat_from_iattx (&rsp.prestat, prebuf);
+        gfx_stat_from_iattx (&rsp.poststat, postbuf);
 
         /**
          * no point in linking inode here -- there's no stbuf anyway and a
@@ -2238,9 +2236,9 @@ out:
 
         req = frame->local;
         server_submit_reply (frame, req, &rsp, NULL, 0, NULL,
-                             (xdrproc_t)xdr_gfs4_namelink_rsp);
+                             (xdrproc_t)xdr_gfx_common_2iatt_rsp);
 
-        GF_FREE (rsp.xdata.xdata_val);
+        GF_FREE (rsp.xdata.pairs.pairs_val);
 
         return 0;
 }
@@ -2254,11 +2252,9 @@ server_icreate_cbk (call_frame_t *frame,
         server_state_t      *state      = NULL;
         inode_t             *link_inode = NULL;
         rpcsvc_request_t    *req        = NULL;
-        gfs3_create_rsp      rsp        = {0,};
+        gfx_common_iatt_rsp  rsp        = {0,};
 
-        GF_PROTOCOL_DICT_SERIALIZE (this, xdata, &rsp.xdata.xdata_val,
-                                    rsp.xdata.xdata_len, op_errno, out);
-
+        dict_to_xdr (xdata, &rsp.xdata);
         state = CALL_STATE (frame);
 
         if (op_ret < 0) {
@@ -2285,7 +2281,7 @@ server_icreate_cbk (call_frame_t *frame,
         inode_lookup (link_inode);
         inode_unref (link_inode);
 
-        gf_stat_from_iatt (&rsp.stat, stbuf);
+        gfx_stat_from_iattx (&rsp.stat, stbuf);
 
 out:
         rsp.op_ret    = op_ret;
@@ -2293,9 +2289,9 @@ out:
 
         req = frame->local;
         server_submit_reply (frame, req, &rsp, NULL, 0, NULL,
-                             (xdrproc_t)xdr_gfs4_icreate_rsp);
+                             (xdrproc_t)xdr_gfx_common_iatt_rsp);
 
-        GF_FREE (rsp.xdata.xdata_val);
+        GF_FREE (rsp.xdata.pairs.pairs_val);
 
         return 0;
 }
@@ -6231,11 +6227,11 @@ out:
 }
 
 int
-server3_3_namelink (rpcsvc_request_t *req)
+server4_namelink (rpcsvc_request_t *req)
 {
         server_state_t    *state    = NULL;
         call_frame_t      *frame    = NULL;
-        gfs4_namelink_req  args     = {{0,},};
+        gfx_namelink_req  args     = {{0,},};
         int                ret      = -1;
         int                op_errno = 0;
 
@@ -6243,7 +6239,7 @@ server3_3_namelink (rpcsvc_request_t *req)
                 return ret;
 
         ret = rpc_receive_common (req, &frame, &state, NULL, &args,
-                                  xdr_gfs4_namelink_req, GF_FOP_NAMELINK);
+                                  xdr_gfx_namelink_req, GF_FOP_NAMELINK);
 
         if (ret != 0)
                 goto out;
@@ -6253,20 +6249,11 @@ server3_3_namelink (rpcsvc_request_t *req)
 
         state->resolve.type = RESOLVE_NOT;
 
-        /* TODO: can do alloca for xdata field instead of stdalloc */
-        GF_PROTOCOL_DICT_UNSERIALIZE (frame->root->client->bound_xl,
-                                      state->xdata,
-                                      args.xdata.xdata_val,
-                                      args.xdata.xdata_len, ret,
-                                      op_errno, out);
-
+        xdr_to_dict (&args.xdata, &state->xdata);
         ret = 0;
         resolve_and_resume (frame, server_namelink_resume);
 
 out:
-        /* memory allocated by libc, don't use GF_FREE */
-        free (args.xdata.xdata_val);
-
         if (op_errno)
                 SERVER_REQ_SET_ERROR (req, ret);
 
@@ -6275,11 +6262,11 @@ out:
 }
 
 int
-server3_3_icreate (rpcsvc_request_t *req)
+server4_icreate (rpcsvc_request_t *req)
 {
         server_state_t   *state    = NULL;
         call_frame_t     *frame    = NULL;
-        gfs4_icreate_req  args     = {{0,},};
+        gfx_icreate_req  args     = {{0,},};
         int               ret      = -1;
         int               op_errno = 0;
         uuid_t            gfid     = {0,};
@@ -6288,7 +6275,7 @@ server3_3_icreate (rpcsvc_request_t *req)
                 return ret;
 
         ret = rpc_receive_common (req, &frame, &state, NULL, &args,
-                                  xdr_gfs4_icreate_req, GF_FOP_ICREATE);
+                                  xdr_gfx_icreate_req, GF_FOP_ICREATE);
 
         if (ret != 0)
                 goto out;
@@ -6304,20 +6291,11 @@ server3_3_icreate (rpcsvc_request_t *req)
 
         state->resolve.type = RESOLVE_NOT;
 
-        /* TODO: can do alloca for xdata field instead of stdalloc */
-        GF_PROTOCOL_DICT_UNSERIALIZE (frame->root->client->bound_xl,
-                                      state->xdata,
-                                      args.xdata.xdata_val,
-                                      args.xdata.xdata_len, ret,
-                                      op_errno, out);
-
+        xdr_to_dict (&args.xdata, &state->xdata);
         ret = 0;
         resolve_and_resume (frame, server_icreate_resume);
 
 out:
-        /* memory allocated by libc, don't use GF_FREE */
-        free (args.xdata.xdata_val);
-
         if (op_errno)
                 SERVER_REQ_SET_ERROR (req, ret);
 
@@ -6329,7 +6307,7 @@ server4_0_fsetattr (rpcsvc_request_t *req)
 {
         server_state_t       *state    = NULL;
         call_frame_t         *frame    = NULL;
-        gfs3_fsetattr_req_v2  args     = {{0},};
+        gfx_fsetattr_req      args     = {{0},};
         int                   ret      = -1;
         int                   op_errno = 0;
 
@@ -6337,7 +6315,7 @@ server4_0_fsetattr (rpcsvc_request_t *req)
                 return ret;
 
         ret = rpc_receive_common (req, &frame, &state, NULL, &args,
-                                  xdr_gfs3_fsetattr_req_v2,
+                                  xdr_gfx_fsetattr_req,
                                   GF_FOP_FSETATTR);
         if (ret != 0) {
                 goto out;
@@ -6347,20 +6325,14 @@ server4_0_fsetattr (rpcsvc_request_t *req)
         state->resolve.fd_no  = args.fd;
         memcpy (state->resolve.gfid, args.gfid, 16);
 
-        gf_stat_to_iatt (&args.stbuf, &state->stbuf);
+        gfx_stat_to_iattx (&args.stbuf, &state->stbuf);
         state->valid = args.valid;
 
-        GF_PROTOCOL_DICT_UNSERIALIZE (frame->root->client->bound_xl,
-                                      state->xdata, (args.xdata.xdata_val),
-                                      (args.xdata.xdata_len), ret,
-                                      op_errno, out);
-
+        xdr_to_dict (&args.xdata, &state->xdata);
         ret = 0;
         resolve_and_resume (frame, server_fsetattr_resume);
 
 out:
-        free (args.xdata.xdata_val);
-
         if (op_errno)
                 SERVER_REQ_SET_ERROR (req, ret);
 
@@ -6372,7 +6344,7 @@ server4_0_rchecksum (rpcsvc_request_t *req)
 {
         server_state_t        *state    = NULL;
         call_frame_t          *frame    = NULL;
-        gfs3_rchecksum_req_v2  args     = {{0},};
+        gfx_rchecksum_req      args     = {{0},};
         int                    ret      = -1;
         int                    op_errno = 0;
 
@@ -6380,7 +6352,7 @@ server4_0_rchecksum (rpcsvc_request_t *req)
                 return ret;
 
         ret = rpc_receive_common (req, &frame, &state, NULL, &args,
-                                  xdr_gfs3_rchecksum_req_v2,
+                                  xdr_gfx_rchecksum_req,
                                   GF_FOP_RCHECKSUM);
         if (ret != 0) {
                 goto out;
@@ -6393,16 +6365,10 @@ server4_0_rchecksum (rpcsvc_request_t *req)
 
         memcpy (state->resolve.gfid, args.gfid, 16);
 
-        GF_PROTOCOL_DICT_UNSERIALIZE (frame->root->client->bound_xl,
-                                      state->xdata, (args.xdata.xdata_val),
-                                      (args.xdata.xdata_len), ret,
-                                      op_errno, out);
-
+        xdr_to_dict (&args.xdata, &state->xdata);
         ret = 0;
         resolve_and_resume (frame, server_rchecksum_resume);
 out:
-        free (args.xdata.xdata_val);
-
         if (op_errno)
                 SERVER_REQ_SET_ERROR (req, ret);
 
@@ -6531,8 +6497,8 @@ rpcsvc_actor_t glusterfs4_0_fop_actors[] = {
         [GFS3_OP_GETACTIVELK]  = {"GETACTIVELK",  GFS3_OP_GETACTIVELK,  server3_3_getactivelk,  NULL, 0, DRC_NA},
         [GFS3_OP_SETACTIVELK]  = {"SETACTIVELK",  GFS3_OP_SETACTIVELK,  server3_3_setactivelk,  NULL, 0, DRC_NA},
         [GFS3_OP_COMPOUND]     = {"COMPOUND",     GFS3_OP_COMPOUND,     server3_3_compound,     NULL, 0, DRC_NA},
-        [GFS3_OP_ICREATE]     =  {"ICREATE",      GFS3_OP_ICREATE,      server3_3_icreate,      NULL, 0, DRC_NA},
-        [GFS3_OP_NAMELINK]    =  {"NAMELINK",     GFS3_OP_NAMELINK,     server3_3_namelink,     NULL, 0, DRC_NA},
+        [GFS3_OP_ICREATE]     =  {"ICREATE",      GFS3_OP_ICREATE,      server4_icreate,      NULL, 0, DRC_NA},
+        [GFS3_OP_NAMELINK]    =  {"NAMELINK",     GFS3_OP_NAMELINK,     server4_namelink,     NULL, 0, DRC_NA},
 };
 
 

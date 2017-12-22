@@ -288,6 +288,7 @@ gf_proto_flock_from_flock (struct gf_proto_flock *gf_proto_flock, struct gf_floc
                 gf_proto_flock->lk_owner.lk_owner_val = gf_flock->l_owner.data;
 }
 
+/* No changes needed here, what you get on wire is going to be valid */
 static inline void
 gf_stat_to_iatt (struct gf_iatt *gf_stat, struct iatt *iatt)
 {
@@ -312,15 +313,22 @@ gf_stat_to_iatt (struct gf_iatt *gf_stat, struct iatt *iatt)
 	iatt->ia_mtime_nsec = gf_stat->ia_mtime_nsec ;
 	iatt->ia_ctime = gf_stat->ia_ctime ;
 	iatt->ia_ctime_nsec = gf_stat->ia_ctime_nsec ;
+
+        /* set the flags, assuming all the received fields are valid */
+        iatt->ia_flags = IATT_TYPE | IATT_MODE | IATT_NLINK | IATT_GFID |
+                         IATT_UID | IATT_GID | IATT_SIZE | IATT_BLOCKS |
+                         IATT_ATIME | IATT_MTIME | IATT_CTIME | IATT_INO;
+
 }
 
-
+/* Need to set the fields properly for backward compatibility */
 static inline void
 gf_stat_from_iatt (struct gf_iatt *gf_stat, struct iatt *iatt)
 {
         if (!iatt || !gf_stat)
                 return;
 
+        /* TODO: Set this based on validity */
         memcpy (gf_stat->ia_gfid, iatt->ia_gfid, 16);
 	gf_stat->ia_ino = iatt->ia_ino ;
 	gf_stat->ia_dev = iatt->ia_dev ;
@@ -421,5 +429,69 @@ gf_proto_cache_invalidation_to_upcall (xlator_t *this,
 
 extern int dict_to_xdr (dict_t *this, gfx_dict *xdict);
 extern int xdr_to_dict (gfx_dict *xdict, dict_t **to);
+
+static inline void
+gfx_stat_to_iattx (struct gfx_iattx *gf_stat, struct iatt *iatt)
+{
+        if (!iatt || !gf_stat)
+                return;
+
+        memcpy (iatt->ia_gfid, gf_stat->ia_gfid, 16);
+
+        iatt->ia_flags = gf_stat->ia_flags;
+	iatt->ia_ino = gf_stat->ia_ino ;
+	iatt->ia_dev = gf_stat->ia_dev ;
+	iatt->ia_rdev = gf_stat->ia_rdev ;
+	iatt->ia_size = gf_stat->ia_size ;
+	iatt->ia_nlink = gf_stat->ia_nlink ;
+	iatt->ia_uid = gf_stat->ia_uid ;
+	iatt->ia_gid = gf_stat->ia_gid ;
+	iatt->ia_blksize = gf_stat->ia_blksize ;
+	iatt->ia_blocks = gf_stat->ia_blocks ;
+	iatt->ia_atime = gf_stat->ia_atime ;
+	iatt->ia_atime_nsec = gf_stat->ia_atime_nsec ;
+	iatt->ia_mtime = gf_stat->ia_mtime ;
+	iatt->ia_mtime_nsec = gf_stat->ia_mtime_nsec ;
+	iatt->ia_ctime = gf_stat->ia_ctime ;
+	iatt->ia_ctime_nsec = gf_stat->ia_ctime_nsec ;
+	iatt->ia_btime = gf_stat->ia_btime ;
+	iatt->ia_btime_nsec = gf_stat->ia_btime_nsec ;
+        iatt->ia_attributes = gf_stat->ia_attributes;
+        iatt->ia_attributes_mask = gf_stat->ia_attributes_mask;
+	iatt->ia_type = ia_type_from_st_mode (gf_stat->mode) ;
+	iatt->ia_prot = ia_prot_from_st_mode (gf_stat->mode) ;
+}
+
+
+static inline void
+gfx_stat_from_iattx (struct gfx_iattx *gf_stat, struct iatt *iatt)
+{
+        if (!iatt || !gf_stat)
+                return;
+
+        memcpy (gf_stat->ia_gfid, iatt->ia_gfid, 16);
+	gf_stat->ia_ino = iatt->ia_ino ;
+	gf_stat->ia_dev = iatt->ia_dev ;
+	gf_stat->mode   = st_mode_from_ia (iatt->ia_prot, iatt->ia_type);
+	gf_stat->ia_nlink = iatt->ia_nlink ;
+	gf_stat->ia_uid = iatt->ia_uid ;
+	gf_stat->ia_gid = iatt->ia_gid ;
+	gf_stat->ia_rdev = iatt->ia_rdev ;
+	gf_stat->ia_size = iatt->ia_size ;
+	gf_stat->ia_blksize = iatt->ia_blksize ;
+	gf_stat->ia_blocks = iatt->ia_blocks ;
+	gf_stat->ia_atime = iatt->ia_atime ;
+	gf_stat->ia_atime_nsec = iatt->ia_atime_nsec ;
+	gf_stat->ia_mtime = iatt->ia_mtime ;
+	gf_stat->ia_mtime_nsec = iatt->ia_mtime_nsec ;
+	gf_stat->ia_ctime = iatt->ia_ctime ;
+	gf_stat->ia_ctime_nsec = iatt->ia_ctime_nsec ;
+
+        gf_stat->ia_flags = iatt->ia_flags;
+        gf_stat->ia_btime = iatt->ia_btime ;
+	gf_stat->ia_btime_nsec = iatt->ia_btime_nsec ;
+        gf_stat->ia_attributes = iatt->ia_attributes;
+        gf_stat->ia_attributes_mask = iatt->ia_attributes_mask;
+}
 
 #endif /* !_GLUSTERFS3_H */

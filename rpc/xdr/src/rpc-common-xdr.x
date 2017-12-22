@@ -66,6 +66,36 @@ struct gf_common_rsp {
        opaque   xdata<>; /* Extra data */
 } ;
 
+/* Need to consume iattx and new dict in all the fops */
+struct gfx_iattx {
+        opaque       ia_gfid[20];
+
+        unsigned hyper     ia_flags;
+        unsigned hyper     ia_ino;        /* inode number */
+        unsigned hyper     ia_dev;        /* backing device ID */
+        unsigned hyper     ia_rdev;       /* device ID (if special file) */
+        unsigned hyper     ia_size;       /* file size in bytes */
+        unsigned hyper     ia_blocks;     /* number of 512B blocks allocated */
+        unsigned hyper     ia_attributes; /* chattr related:compressed, immutable,
+                                     * append only, encrypted etc.*/
+        unsigned hyper     ia_attributes_mask; /* Mask for the attributes */
+
+        hyper      ia_atime;      /* last access time */
+        hyper      ia_mtime;      /* last modification time */
+        hyper      ia_ctime;      /* last status change time */
+        hyper      ia_btime;      /* creation time. Fill using statx */
+
+        unsigned int     ia_atime_nsec;
+        unsigned int     ia_mtime_nsec;
+        unsigned int     ia_ctime_nsec;
+        unsigned int     ia_btime_nsec;
+        unsigned int     ia_nlink;      /* Link count */
+        unsigned int     ia_uid;        /* user ID of owner */
+        unsigned int     ia_gid;        /* group ID of owner */
+        unsigned int     ia_blksize;    /* blocksize for filesystem I/O */
+        unsigned int     mode;          /* type of file and rwx mode */
+};
+
 
 union gfx_value switch (gf_dict_data_type_t type) {
         case GF_DATA_TYPE_INT:
