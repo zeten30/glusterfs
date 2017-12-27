@@ -106,6 +106,12 @@ union gfx_value switch (gf_dict_data_type_t type) {
                 double value_dbl;
         case GF_DATA_TYPE_STR:
                 opaque val_string<>;
+        case GF_DATA_TYPE_IATT:
+                gfx_iattx iatt;
+        case GF_DATA_TYPE_GFUUID:
+                opaque uuid[20];
+        case GF_DATA_TYPE_PTR:
+                opaque other<>;
 };
 
 struct gfx_dict_pair {
