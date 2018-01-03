@@ -3590,7 +3590,7 @@ err:
 }
 
 /* Fop section */
-inline int
+int
 rpc_receive_common (rpcsvc_request_t *req, call_frame_t **fr,
                     server_state_t **st, ssize_t *xdrlen, void *args,
                     void *xdrfn, glusterfs_fop_t fop)

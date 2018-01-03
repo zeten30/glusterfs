@@ -120,6 +120,7 @@ struct gfx_dict_pair {
 };
 
 struct gfx_dict {
+       unsigned int xdr_size;
        unsigned int count;
        gfx_dict_pair pairs<>;
 };

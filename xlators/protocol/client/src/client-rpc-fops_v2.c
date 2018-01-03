@@ -20,12 +20,6 @@
 
 extern int32_t
 client3_getspec (call_frame_t *frame, xlator_t *this, void *data);
-extern int32_t
-client3_3_writev (call_frame_t *frame, xlator_t *this, void *data);
-extern int32_t
-client3_3_readv (call_frame_t *frame, xlator_t *this, void *data);
-extern int32_t
-client3_3_readdirp (call_frame_t *frame, xlator_t *this, void *data);
 extern int
 client_submit_vec_request (xlator_t  *this, void *req, call_frame_t  *frame,
                            rpc_clnt_prog_t *prog, int procnum,
@@ -3791,6 +3785,11 @@ client4_0_writev (call_frame_t *frame, xlator_t *this, void *data)
                 op_errno = -ret;
                 goto unwind;
         }
+
+        /* TODO: it should be part of dict_to_xdr () */
+        req.xdata.xdr_size = xdr_sizeof ((xdrproc_t) xdr_gfx_dict,
+                                         &req.xdata);
+
         ret = client_submit_vec_request (this, &req, frame, conf->fops,
                                          GFS3_OP_WRITE, client4_0_writev_cbk,
                                          args->vector, args->count,
@@ -6121,11 +6120,11 @@ rpc_clnt_procedure_t clnt4_0_fop_actors[GF_FOP_MAXVALUE] = {
         [GF_FOP_ICREATE]     = { "ICREATE",     client4_icreate},
         [GF_FOP_NAMELINK]    = { "NAMELINK",    client4_namelink},
         [GF_FOP_COMPOUND]    = { "COMPOUND",    client4_0_compound},
+        [GF_FOP_WRITE]       = { "WRITE",       client4_0_writev },
+        [GF_FOP_READ]        = { "READ",        client4_0_readv },
 
         /* Use old XDR for now */
-        [GF_FOP_READ]        = { "READ",        client3_3_readv },
-        [GF_FOP_WRITE]       = { "WRITE",       client3_3_writev },
-        [GF_FOP_READDIRP]    = { "READDIRP",    client3_3_readdirp },
+        [GF_FOP_READDIRP]    = { "READDIRP",    client4_0_readdirp },
 };
 
 /* Used From RPC-CLNT library to log proper name of procedure based on number */

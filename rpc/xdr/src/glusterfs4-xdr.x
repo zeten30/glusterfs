@@ -198,9 +198,9 @@ struct   gfx_open_rsp {
  struct  gfx_read_rsp {
         int    op_ret;
         int    op_errno;
-        gfx_dict xdata; /* Extra data */
         gfx_iattx stat;
         unsigned int size;
+        gfx_dict xdata; /* Extra data */
 } ;
 
 struct   gfx_lookup_req {

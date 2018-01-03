@@ -31,15 +31,6 @@
                 ret = RPCSVC_ACTOR_ERROR;                       \
         } while (0)
 
-extern int
-server3_3_writev (rpcsvc_request_t *req);
-extern int
-server3_3_readv (rpcsvc_request_t *req);
-extern int
-server3_3_readdirp (rpcsvc_request_t *req);
-extern int
-server3_3_writev_vecsizer (int state, ssize_t *readsize, char *base_addr,
-                           char *curr_addr);
 extern void
 set_resolve_gfid (client_t *client, uuid_t resolve_gfid,
                   char *on_wire_gfid);
@@ -1362,6 +1353,9 @@ server4_readv_cbk (call_frame_t *frame, void *cookie, xlator_t *this,
         }
 #endif
         dict_to_xdr (xdata, &rsp.xdata);
+        /* TODO: it should be part of dict_to_xdr () */
+        rsp.xdata.xdr_size = xdr_sizeof ((xdrproc_t) xdr_gfx_dict,
+                                         &rsp.xdata) - 12;
 
         if (op_ret < 0) {
                 state = CALL_STATE (frame);
@@ -2562,7 +2556,7 @@ server4_readdirp_resume (call_frame_t *frame, xlator_t *bound_xl)
 
         STACK_WIND (frame, server4_readdirp_cbk, bound_xl,
                     bound_xl->fops->readdirp, state->fd, state->size,
-                    state->offset, state->dict);
+                    state->offset, state->xdata);
 
         return 0;
 err:
@@ -3864,11 +3858,11 @@ out:
 
 int
 server4_0_writev_vecsizer (int state, ssize_t *readsize, char *base_addr,
-                        char *curr_addr)
+                           char *curr_addr)
 {
         ssize_t         size = 0;
         int             nextstate = 0;
-        gfx_write_req  write_req = {{0,},};
+        gfx_write_req   write_req = {{0,},};
         XDR             xdr;
 
         switch (state) {
@@ -3890,6 +3884,8 @@ server4_0_writev_vecsizer (int state, ssize_t *readsize, char *base_addr,
 
                 /* need to round off to proper roof (%4), as XDR packing pads
                    the end of opaque object with '0' */
+                size = roof ((write_req.xdata.xdr_size - 12), 4);
+
                 *readsize = size;
 
                 if (!size)
@@ -3897,14 +3893,14 @@ server4_0_writev_vecsizer (int state, ssize_t *readsize, char *base_addr,
                 else
                         nextstate = SERVER4_0_VECWRITE_READING_OPAQUE;
 
+                free (write_req.xdata.pairs.pairs_val);
+
                 break;
+
         case SERVER4_0_VECWRITE_READING_OPAQUE:
                 *readsize = 0;
                 nextstate = SERVER4_0_VECWRITE_START;
                 break;
-        default:
-                gf_msg ("server", GF_LOG_ERROR, 0, PS_MSG_WRONG_STATE,
-                        "wrong state: %d", state);
         }
 
         return nextstate;
@@ -5909,11 +5905,11 @@ rpcsvc_actor_t glusterfs4_0_fop_actors[] = {
         [GFS3_OP_ICREATE]     =  {"ICREATE",      GFS3_OP_ICREATE,      server4_icreate,      NULL, 0, DRC_NA},
         [GFS3_OP_NAMELINK]    =  {"NAMELINK",     GFS3_OP_NAMELINK,     server4_namelink,     NULL, 0, DRC_NA},
         [GFS3_OP_COMPOUND]    =  {"COMPOUND",     GFS3_OP_COMPOUND,     server4_0_compound,     NULL, 0, DRC_NA},
+        [GFS3_OP_WRITE]       = { "WRITE",      GFS3_OP_WRITE, server4_0_writev, server4_0_writev_vecsizer, 0},
+        [GFS3_OP_READ]        = { "READ",       GFS3_OP_READ, server4_0_readv, NULL, 0},
 
         /* Need to fix some issues in new version. Use old XDR for now */
-        [GFS3_OP_READ]        = { "READ",       GFS3_OP_READ, server3_3_readv, NULL, 0},
-        [GFS3_OP_WRITE]       = { "WRITE",      GFS3_OP_WRITE, server3_3_writev, server3_3_writev_vecsizer, 0},
-        [GFS3_OP_READDIRP]    = { "READDIRP",   GFS3_OP_READDIRP, server3_3_readdirp, NULL, 0},
+        [GFS3_OP_READDIRP]    = { "READDIRP",   GFS3_OP_READDIRP, server4_0_readdirp, NULL, 0},
 };
 
 

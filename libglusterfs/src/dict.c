@@ -3235,8 +3235,14 @@ dict_to_xdr (dict_t *this, gfx_dict *dict)
         data_pair_t *dpair = NULL;
         gfx_dict_pair *xpair = NULL;
 
-        if (!this || !dict)
+        if (!dict)
                 goto out;
+
+        if (!this) {
+                dict->pairs.pairs_len = 0;
+                ret = 0;
+                goto out;
+        }
 
         dict->pairs.pairs_val = GF_CALLOC (1, (this->count *
                                                sizeof (gfx_dict_pair)),
@@ -3315,6 +3321,13 @@ dict_to_xdr (dict_t *this, gfx_dict *dict)
 
         dict->pairs.pairs_len = index;
         dict->count = index;
+
+        /* Get XDR Size also at top */
+        /* TODO: this becomes a cross library linking issue */
+        /*
+        dict->xdr_size = xdr_sizeof ((xdrproc_t) xdr_gfx_dict,
+                                     &dict);
+        */
         ret = 0;
 out:
         return ret;
@@ -3359,7 +3372,8 @@ xdr_to_dict (gfx_dict *dict, dict_t **to)
                                     xpair->value.gfx_value_u.value_dbl);
                         break;
                 case GF_DATA_TYPE_STR:
-                        value = gf_strdup (xpair->value.gfx_value_u.val_string.val_string_val);
+                        value = gf_memdup (xpair->value.gfx_value_u.val_string.val_string_val,
+                                           xpair->value.gfx_value_u.val_string.val_string_len);
                         if (!value) {
                                 errno = ENOMEM;
                                 goto out;

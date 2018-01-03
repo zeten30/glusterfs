@@ -4628,7 +4628,7 @@ server_populate_compound_request_v2 (gfx_compound_req *req, call_frame_t *frame,
 
                 args = &this_req->compound_req_v2_u.compound_setxattr_req;
 
-                xdr_to_dict (&args->xdata, &xdata);
+                xdr_to_dict (&args->dict, &xattr);
                 xdr_to_dict (&args->xdata, &xdata);
                 args_setxattr_store (this_args, &state->loc, xattr, args->flags,
                                      xdata);
@@ -4928,7 +4928,7 @@ server_populate_compound_request_v2 (gfx_compound_req *req, call_frame_t *frame,
 
                 args = &this_req->compound_req_v2_u.compound_xattrop_req;
 
-                xdr_to_dict (&args->xdata, &xdata);
+                xdr_to_dict (&args->dict, &xattr);
 
                 xdr_to_dict (&args->xdata, &xdata);
                 args_xattrop_store (this_args, &state->loc, args->flags,
@@ -4941,7 +4941,7 @@ server_populate_compound_request_v2 (gfx_compound_req *req, call_frame_t *frame,
 
                 args = &this_req->compound_req_v2_u.compound_fxattrop_req;
 
-                xdr_to_dict (&args->xdata, &xdata);
+                xdr_to_dict (&args->dict, &xattr);
 
                 xdr_to_dict (&args->xdata, &xdata);
 
@@ -4966,7 +4966,7 @@ server_populate_compound_request_v2 (gfx_compound_req *req, call_frame_t *frame,
 
                 args = &this_req->compound_req_v2_u.compound_fsetxattr_req;
 
-                xdr_to_dict (&args->xdata, &xdata);
+                xdr_to_dict (&args->dict, &xattr);
 
                 xdr_to_dict (&args->xdata, &xdata);
 
