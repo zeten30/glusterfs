@@ -135,8 +135,8 @@ typedef enum {
         } while (0)
 
 /* compound v2 */
-#define CPD4_REQ_FIELD(v,f)  ((v)->compound_req_v2_u.compound_##f##_req)
-#define CPD4_RSP_FIELD(v,f)  ((v)->compound_rsp_v2_u.compound_##f##_rsp)
+#define CPD4_REQ_FIELD(v, f)  ((v)->compound_req_v2_u.compound_##f##_req)
+#define CPD4_RSP_FIELD(v, f)  ((v)->compound_rsp_v2_u.compound_##f##_rsp)
 
 #define CLIENT4_POST_FOP(fop, this_rsp_u, this_args_cbk,  params ...)   \
         do {                                                            \

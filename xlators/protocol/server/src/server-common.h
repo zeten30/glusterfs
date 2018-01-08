@@ -184,6 +184,11 @@ server4_post_create (call_frame_t *frame, gfx_create_rsp *rsp,
 void
 server4_post_common_2iatt (gfx_common_2iatt_rsp *rsp,
                            struct iatt *stbuf1, struct iatt *stbuf2);
+
+void
+server4_post_entry_remove (server_state_t *state, gfx_common_2iatt_rsp *rsp,
+                           struct iatt *stbuf1, struct iatt *stbuf2);
+
 void
 server4_post_common_3iatt (server_state_t *state, gfx_common_3iatt_rsp *rsp,
                            inode_t *inode, struct iatt *stbuf, struct iatt *pre,
@@ -197,3 +202,7 @@ void
 server4_post_lookup (gfx_common_2iatt_rsp *rsp, call_frame_t *frame,
                      server_state_t *state,
                      inode_t *inode, struct iatt *stbuf);
+void
+server4_post_link (server_state_t *state, gfx_common_3iatt_rsp *rsp,
+                   inode_t *inode, struct iatt *stbuf, struct iatt *pre,
+                   struct iatt *post);

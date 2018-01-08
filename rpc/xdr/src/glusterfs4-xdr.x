@@ -12,9 +12,67 @@
 %#include "rpc-pragmas.h"
 #endif
 %#include "compat.h"
-%#include "rpc-common-xdr.h"
 %#include "glusterfs-fops.h"
 %#include "glusterfs3-xdr.h"
+
+
+/* Need to consume iattx and new dict in all the fops */
+struct gfx_iattx {
+        opaque       ia_gfid[20];
+
+        unsigned hyper     ia_flags;
+        unsigned hyper     ia_ino;        /* inode number */
+        unsigned hyper     ia_dev;        /* backing device ID */
+        unsigned hyper     ia_rdev;       /* device ID (if special file) */
+        unsigned hyper     ia_size;       /* file size in bytes */
+        unsigned hyper     ia_blocks;     /* number of 512B blocks allocated */
+        unsigned hyper     ia_attributes; /* chattr related:compressed, immutable,
+                                     * append only, encrypted etc.*/
+        unsigned hyper     ia_attributes_mask; /* Mask for the attributes */
+
+        hyper      ia_atime;      /* last access time */
+        hyper      ia_mtime;      /* last modification time */
+        hyper      ia_ctime;      /* last status change time */
+        hyper      ia_btime;      /* creation time. Fill using statx */
+
+        unsigned int     ia_atime_nsec;
+        unsigned int     ia_mtime_nsec;
+        unsigned int     ia_ctime_nsec;
+        unsigned int     ia_btime_nsec;
+        unsigned int     ia_nlink;      /* Link count */
+        unsigned int     ia_uid;        /* user ID of owner */
+        unsigned int     ia_gid;        /* group ID of owner */
+        unsigned int     ia_blksize;    /* blocksize for filesystem I/O */
+        unsigned int     mode;          /* type of file and rwx mode */
+};
+
+union gfx_value switch (gf_dict_data_type_t type) {
+        case GF_DATA_TYPE_INT:
+                hyper value_int;
+        case GF_DATA_TYPE_UINT:
+                unsigned hyper value_uint;
+        case GF_DATA_TYPE_DOUBLE:
+                double value_dbl;
+        case GF_DATA_TYPE_STR:
+                opaque val_string<>;
+        case GF_DATA_TYPE_IATT:
+                gfx_iattx iatt;
+        case GF_DATA_TYPE_GFUUID:
+                opaque uuid[20];
+        case GF_DATA_TYPE_PTR:
+                opaque other<>;
+};
+
+struct gfx_dict_pair {
+       opaque key<>;
+       gfx_value value;
+};
+
+struct gfx_dict {
+       unsigned int xdr_size;
+       unsigned int count;
+       gfx_dict_pair pairs<>;
+};
 
 /* FOPS */
 struct gfx_common_rsp {
@@ -60,6 +118,7 @@ struct gfx_rchecksum_req {
         hyper   fd;
         unsigned hyper  offset;
         unsigned int  len;
+        unsigned int  flags;
         gfx_dict xdata; /* Extra data */
 };
 
@@ -185,6 +244,11 @@ struct   gfx_open_rsp {
         gfx_dict xdata; /* Extra data */
         quad_t fd;
 };
+
+struct gfx_opendir_req {
+        opaque gfid[20];
+        gfx_dict xdata; /* Extra data */
+}  ;
 
 
  struct   gfx_read_req {
@@ -373,18 +437,6 @@ struct   gfx_finodelk_req {
 }  ;
 
 
- struct gfx_opendir_req {
-        opaque gfid[20];
-        gfx_dict xdata; /* Extra data */
-}  ;
- struct gfx_opendir_rsp {
-        int    op_ret;
-        int    op_errno;
-        gfx_dict xdata; /* Extra data */
-        quad_t fd;
-}  ;
-
-
  struct gfx_fsyncdir_req {
         opaque gfid[20];
         quad_t  fd;
@@ -506,6 +558,7 @@ struct gfx_rchecksum_rsp {
         int    op_ret;
         int    op_errno;
         gfx_dict xdata; /* Extra data */
+        unsigned int flags;
         unsigned int weak_checksum;
         opaque   strong_checksum<>;
 }  ;
@@ -743,7 +796,7 @@ union compound_rsp_v2 switch (glusterfs_fop_t fop_enum) {
         case GF_FOP_GETXATTR:     gfx_common_dict_rsp compound_getxattr_rsp;
         case GF_FOP_SETXATTR:     gfx_common_rsp compound_setxattr_rsp;
         case GF_FOP_REMOVEXATTR:  gfx_common_rsp compound_removexattr_rsp;
-        case GF_FOP_OPENDIR:      gfx_opendir_rsp compound_opendir_rsp;
+        case GF_FOP_OPENDIR:      gfx_open_rsp compound_opendir_rsp;
         case GF_FOP_FSYNCDIR:     gfx_common_rsp compound_fsyncdir_rsp;
         case GF_FOP_ACCESS:       gfx_common_rsp compound_access_rsp;
         case GF_FOP_CREATE:       gfx_create_rsp compound_create_rsp;

@@ -37,7 +37,7 @@ struct dict_cmp {
         gf_boolean_t (*value_ignore) (char *k);
 };
 
-#define VALIDATE_DATA_AND_LOG(data, type, ret_val) do {                 \
+#define VALIDATE_DATA_AND_LOG(data, type, key, ret_val) do {                 \
                 if (!data || !data->data) {                             \
                         gf_msg_callingfn ("dict", GF_LOG_WARNING, EINVAL, \
                                           LG_MSG_INVALID_ARG, "data is NULL"); \
@@ -47,8 +47,8 @@ struct dict_cmp {
                 if (data->data_type != type) {                          \
                         gf_msg_callingfn ("dict", GF_LOG_INFO, EINVAL,  \
                                           LG_MSG_INVALID_ARG,           \
-                                          "%s type asked, has %s type", \
-                                          data_type_name[type],         \
+                                          "key %s, %s type asked, has %s type", \
+                                          key, data_type_name[type],         \
                                           data_type_name[data->data_type]); \
                 }                                                       \
         } while (0)
@@ -1008,7 +1008,7 @@ static char *data_type_name[GF_DATA_TYPE_MAX] = {
 int64_t
 data_to_int64 (data_t *data)
 {
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_INT, -1);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_INT, "null", -1);
 
         char *str = alloca (data->len + 1);
         if (!str)
@@ -1022,7 +1022,7 @@ data_to_int64 (data_t *data)
 int32_t
 data_to_int32 (data_t *data)
 {
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_INT, -1);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_INT, "null", -1);
 
         char *str = alloca (data->len + 1);
         if (!str)
@@ -1037,7 +1037,7 @@ data_to_int32 (data_t *data)
 int16_t
 data_to_int16 (data_t *data)
 {
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_INT, -1);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_INT, "null", -1);
 
         int16_t value = 0;
         char *str = alloca (data->len + 1);
@@ -1065,7 +1065,7 @@ data_to_int16 (data_t *data)
 int8_t
 data_to_int8 (data_t *data)
 {
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_INT, -1);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_INT, "null", -1);
 
         int8_t value = 0;
         char *str = alloca (data->len + 1);
@@ -1093,7 +1093,7 @@ data_to_int8 (data_t *data)
 uint64_t
 data_to_uint64 (data_t *data)
 {
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_UINT, -1);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_UINT, "null", -1);
 
         char *str = alloca (data->len + 1);
         if (!str)
@@ -1108,7 +1108,7 @@ data_to_uint64 (data_t *data)
 uint32_t
 data_to_uint32 (data_t *data)
 {
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_UINT, -1);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_UINT, "null", -1);
 
         char *str = alloca (data->len + 1);
         if (!str)
@@ -1123,7 +1123,7 @@ data_to_uint32 (data_t *data)
 uint16_t
 data_to_uint16 (data_t *data)
 {
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_UINT, -1);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_UINT, "null", -1);
 
 	uint16_t value = 0;
         char *str = alloca (data->len + 1);
@@ -1151,7 +1151,7 @@ data_to_uint16 (data_t *data)
 uint8_t
 data_to_uint8 (data_t *data)
 {
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_UINT, -1);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_UINT, "null", -1);
 
 	uint32_t value = 0;
         char *str = alloca (data->len + 1);
@@ -1178,21 +1178,21 @@ data_to_uint8 (data_t *data)
 char *
 data_to_str (data_t *data)
 {
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_STR, NULL);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_STR, "null", NULL);
         return data->data;
 }
 
 void *
 data_to_ptr (data_t *data)
 {
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_PTR, NULL);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_PTR, "null", NULL);
         return data->data;
 }
 
 void *
 data_to_bin (data_t *data)
 {
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_PTR, NULL);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_PTR, "null", NULL);
         return data->data;
 }
 
@@ -1708,7 +1708,7 @@ dict_get_int8 (dict_t *this, char *key, int8_t *val)
                 goto err;
         }
 
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_INT, -EINVAL);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_INT, key, -EINVAL);
 
         ret = data_to_int8_ptr (data, val);
 
@@ -1755,7 +1755,7 @@ dict_get_int16 (dict_t *this, char *key, int16_t *val)
                 goto err;
         }
 
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_INT, -EINVAL);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_INT, key, -EINVAL);
 
         ret = data_to_int16_ptr (data, val);
 
@@ -1802,7 +1802,7 @@ dict_get_int32 (dict_t *this, char *key, int32_t *val)
                 goto err;
         }
 
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_INT, -EINVAL);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_INT, key, -EINVAL);
 
         ret = data_to_int32_ptr (data, val);
 
@@ -1849,7 +1849,7 @@ dict_get_int64 (dict_t *this, char *key, int64_t *val)
                 goto err;
         }
 
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_INT, -EINVAL);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_INT, key, -EINVAL);
 
         ret = data_to_int64_ptr (data, val);
 
@@ -1896,7 +1896,7 @@ dict_get_uint16 (dict_t *this, char *key, uint16_t *val)
                 goto err;
         }
 
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_UINT, -EINVAL);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_UINT, key, -EINVAL);
 
         ret = data_to_uint16_ptr (data, val);
 
@@ -1943,7 +1943,7 @@ dict_get_uint32 (dict_t *this, char *key, uint32_t *val)
                 goto err;
         }
 
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_UINT, -EINVAL);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_UINT, key, -EINVAL);
 
         ret = data_to_uint32_ptr (data, val);
 
@@ -1991,7 +1991,7 @@ dict_get_uint64 (dict_t *this, char *key, uint64_t *val)
                 goto err;
         }
 
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_UINT, -EINVAL);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_UINT, key, -EINVAL);
 
         ret = data_to_uint64_ptr (data, val);
 
@@ -2038,7 +2038,7 @@ dict_get_double (dict_t *this, char *key, double *val)
                 goto err;
         }
 
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_DOUBLE, -EINVAL);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_DOUBLE, key, -EINVAL);
 
         ret = data_to_double_ptr (data, val);
 
@@ -2124,7 +2124,7 @@ dict_get_ptr (dict_t *this, char *key, void **ptr)
                 goto err;
         }
 
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_PTR, -EINVAL);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_PTR, key, -EINVAL);
 
         ret = data_to_ptr_common (data, ptr);
         if (ret != 0) {
@@ -2154,7 +2154,7 @@ dict_get_ptr_and_len (dict_t *this, char *key, void **ptr, int *len)
                 goto err;
         }
 
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_PTR, -EINVAL);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_PTR, key, -EINVAL);
 
 	*len = data->len;
 
@@ -2205,7 +2205,7 @@ dict_get_str (dict_t *this, char *key, char **str)
                 goto err;
         }
 
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_STR, -EINVAL);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_STR, key, -EINVAL);
 
         *str = data->data;
 
@@ -2315,7 +2315,7 @@ dict_get_bin (dict_t *this, char *key, void **bin)
                 goto err;
         }
 
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_PTR, ret);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_PTR, key, ret);
 
         *bin = data->data;
 
@@ -2417,7 +2417,7 @@ dict_get_gfuuid (dict_t *this, char *key, uuid_t *gfid)
                 goto err;
         }
 
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_GFUUID, -EINVAL);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_GFUUID, key, -EINVAL);
 
         memcpy (*gfid, data->data, min(data->len, sizeof (uuid_t)));
 
@@ -2449,7 +2449,7 @@ dict_get_iatt (dict_t *this, char *key, struct iatt *iatt)
                 goto err;
         }
 
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_IATT, -EINVAL);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_IATT, key, -EINVAL);
 
         memcpy (iatt, data->data, min(data->len, sizeof (struct iatt)));
 
@@ -2500,7 +2500,7 @@ dict_get_str_boolean (dict_t *this, char *key, int default_val)
                 goto err;
         }
 
-        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_INT, -EINVAL);
+        VALIDATE_DATA_AND_LOG(data, GF_DATA_TYPE_INT, key, -EINVAL);
 
         ret = gf_string2boolean (data->data, &boo);
         if (ret == -1)
@@ -3223,215 +3223,4 @@ dict_has_key_from_array (dict_t *dict, char **strings, gf_boolean_t *result)
 unlock:
         UNLOCK (&dict->lock);
         return 0;
-}
-
-/* dict_to_xdr () */
-int
-dict_to_xdr (dict_t *this, gfx_dict *dict)
-{
-        int ret = -1;
-        int i = 0;
-        int index = 0;
-        data_pair_t *dpair = NULL;
-        gfx_dict_pair *xpair = NULL;
-
-        if (!dict)
-                goto out;
-
-        if (!this) {
-                dict->pairs.pairs_len = 0;
-                ret = 0;
-                goto out;
-        }
-
-        dict->pairs.pairs_val = GF_CALLOC (1, (this->count *
-                                               sizeof (gfx_dict_pair)),
-                                           gf_common_mt_char);
-        if (!dict->pairs.pairs_val)
-                goto out;
-
-        dpair = this->members_list;
-        for (i = 0; i < this->count; i++) {
-                xpair = &dict->pairs.pairs_val[index];
-
-                xpair->value.type = dpair->value->data_type;
-                xpair->key.key_val = dpair->key;
-                xpair->key.key_len = strlen (dpair->key) + 1;
-
-                switch (dpair->value->data_type) {
-                        /* Add more type here */
-                case GF_DATA_TYPE_INT:
-                        index++;
-                        data_to_int64_ptr (dpair->value, &xpair->value.gfx_value_u.value_int);
-                        break;
-                case GF_DATA_TYPE_UINT:
-                        index++;
-                        data_to_uint64_ptr (dpair->value, &xpair->value.gfx_value_u.value_uint);
-                        break;
-                case GF_DATA_TYPE_DOUBLE:
-                        index++;
-                        data_to_double_ptr (dpair->value,
-                                            &xpair->value.gfx_value_u.value_dbl);
-                        break;
-                case GF_DATA_TYPE_STR:
-                        index++;
-                        xpair->value.gfx_value_u.val_string.val_string_val = dpair->value->data;
-                        xpair->value.gfx_value_u.val_string.val_string_len = dpair->value->len;
-                        break;
-                case GF_DATA_TYPE_IATT:
-                        index++;
-                        gfx_stat_from_iattx (&xpair->value.gfx_value_u.iatt,
-                                            (struct iatt *)dpair->value->data);
-                        break;
-                case GF_DATA_TYPE_GFUUID:
-                        index++;
-                        memcpy (&xpair->value.gfx_value_u.uuid,
-                                dpair->value->data, sizeof (uuid_t));
-                        break;
-
-                case GF_DATA_TYPE_PTR:
-                        index++;
-                        /* Ideally, each type of data stored in dictionary
-                           should have type. A pointer type shouldn't be
-                           sent on wire */
-
-                        /* This is done for backward compatibility as dict is
-                           heavily used for transporting data over wire.
-                           Ideally, whereever there is an issue, fix and move on */
-                        xpair->value.gfx_value_u.other.other_val =
-                                dpair->value->data;
-                        xpair->value.gfx_value_u.other.other_len =
-                                dpair->value->len;
-
-                        /* Change this to INFO, after taking the above down */
-                        gf_msg ("dict", GF_LOG_INFO, EINVAL,
-                                LG_MSG_DICT_SERIAL_FAILED,
-                                "key '%s' is would not be sent on wire in future",
-                                dpair->key);
-                        break;
-                default:
-                        /* Unknown type and ptr type is not sent on wire */
-                        gf_msg ("dict", GF_LOG_WARNING, EINVAL, LG_MSG_DICT_SERIAL_FAILED,
-                                "key '%s' is not sent on wire", dpair->key);
-                        break;
-                }
-
-                dpair = dpair->next;
-        }
-
-        dict->pairs.pairs_len = index;
-        dict->count = index;
-
-        /* Get XDR Size also at top */
-        /* TODO: this becomes a cross library linking issue */
-        /*
-        dict->xdr_size = xdr_sizeof ((xdrproc_t) xdr_gfx_dict,
-                                     &dict);
-        */
-        ret = 0;
-out:
-        return ret;
-}
-
-int
-xdr_to_dict (gfx_dict *dict, dict_t **to)
-{
-        int ret = -1;
-        int index = 0;
-        char *key = NULL;
-        char *value = NULL;
-        gfx_dict_pair *xpair = NULL;
-        dict_t *this = NULL;
-        unsigned char *uuid = NULL;
-        struct iatt *iatt = NULL;
-
-        if (!to || !dict)
-                goto out;
-
-        this = dict_new();
-        if (!this)
-                goto out;
-
-        for (index = 0; index < dict->pairs.pairs_len; index++) {
-                ret = -1;
-                xpair = &dict->pairs.pairs_val[index];
-
-                key = xpair->key.key_val;
-                switch (xpair->value.type) {
-                        /* Add more type here */
-                case GF_DATA_TYPE_INT:
-                        ret = dict_set_int64 (this, key,
-                                    xpair->value.gfx_value_u.value_int);
-                        break;
-                case GF_DATA_TYPE_UINT:
-                        ret = dict_set_uint64 (this, key,
-                                    xpair->value.gfx_value_u.value_uint);
-                        break;
-                case GF_DATA_TYPE_DOUBLE:
-                        ret = dict_set_double (this, key,
-                                    xpair->value.gfx_value_u.value_dbl);
-                        break;
-                case GF_DATA_TYPE_STR:
-                        value = gf_memdup (xpair->value.gfx_value_u.val_string.val_string_val,
-                                           xpair->value.gfx_value_u.val_string.val_string_len);
-                        if (!value) {
-                                errno = ENOMEM;
-                                goto out;
-                        }
-                        free (xpair->value.gfx_value_u.val_string.val_string_val);
-                        ret = dict_set_dynstr (this, key, value);
-                        break;
-                case GF_DATA_TYPE_GFUUID:
-                        uuid = GF_CALLOC (1, 20, gf_common_mt_uuid_t);
-                        if (!uuid) {
-                                errno = ENOMEM;
-                                goto out;
-                        }
-                        memcpy (uuid, xpair->value.gfx_value_u.uuid, 16);
-                        ret = dict_set_gfuuid (this, key, uuid, false);
-                        break;
-                case GF_DATA_TYPE_IATT:
-                        iatt = GF_CALLOC (1, sizeof (struct iatt), gf_common_mt_char);
-                        if (!iatt) {
-                                errno = ENOMEM;
-                                goto out;
-                        }
-                        gfx_stat_to_iattx (&xpair->value.gfx_value_u.iatt, iatt);
-                        ret = dict_set_iatt (this, key, iatt, false);
-                        break;
-                case GF_DATA_TYPE_PTR:
-                        value = gf_memdup (xpair->value.gfx_value_u.other.other_val,
-                                xpair->value.gfx_value_u.other.other_len);
-                        if (!value) {
-                                errno = ENOMEM;
-                                goto out;
-                        }
-                        free (xpair->value.gfx_value_u.other.other_val);
-                        ret = dict_set_dynptr (this, key, value,
-                                               xpair->value.gfx_value_u.other.other_len);
-                        break;
-                default:
-                        ret = 0;
-                        /* Unknown type and ptr type is not sent on wire */
-                        break;
-                }
-                if (ret) {
-                        gf_msg_debug ("dict", ENOMEM,
-                                      "failed to set the key (%s) into dict",
-                                      key);
-                }
-                free (xpair->key.key_val);
-        }
-
-        free (dict->pairs.pairs_val);
-        ret = 0;
-
-        /* If everything is fine, assign the dictionary to target */
-        *to = this;
-        this = NULL;
-out:
-        if (this)
-                dict_unref (this);
-
-        return ret;
 }

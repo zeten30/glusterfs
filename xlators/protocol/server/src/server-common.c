@@ -569,6 +569,23 @@ server4_post_common_2iatt (gfx_common_2iatt_rsp *rsp, struct iatt *prebuf,
 }
 
 void
+server4_post_entry_remove (server_state_t *state, gfx_common_2iatt_rsp *rsp,
+                           struct iatt *prebuf, struct iatt *postbuf)
+{
+        inode_unlink (state->loc.inode, state->loc.parent,
+                      state->loc.name);
+        /* parent should not be found for directories after
+         * inode_unlink, since directories cannot have
+         * hardlinks.
+         */
+        forget_inode_if_no_dentry (state->loc.inode);
+
+        gfx_stat_from_iattx (&rsp->prestat, prebuf);
+        gfx_stat_from_iattx (&rsp->poststat, postbuf);
+}
+
+
+void
 server4_post_statfs (gfx_statfs_rsp *rsp, struct statvfs *stbuf)
 {
         gf_statfs_from_statfs (&rsp->statfs, stbuf);
@@ -841,4 +858,23 @@ void
 server4_post_lease (gfx_lease_rsp *rsp, struct gf_lease *lease)
 {
         gf_proto_lease_from_lease (&rsp->lease, lease);
+}
+
+void
+server4_post_link (server_state_t *state, gfx_common_3iatt_rsp *rsp,
+                   inode_t *inode,
+                   struct iatt *stbuf, struct iatt *preparent,
+                   struct iatt *postparent, dict_t *xdata)
+{
+        inode_t             *link_inode = NULL;
+
+        gfx_stat_from_iattx (&rsp->stat, stbuf);
+        gfx_stat_from_iattx (&rsp->preparent, preparent);
+        gfx_stat_from_iattx (&rsp->postparent, postparent);
+
+        link_inode = inode_link (inode, state->loc2.parent,
+                                 state->loc2.name, stbuf);
+        inode_lookup (link_inode);
+        inode_unref (link_inode);
+
 }

@@ -460,7 +460,7 @@ server4_rmdir_cbk (call_frame_t *frame, void *cookie, xlator_t *this,
                 goto out;
         }
 
-        server4_post_common_2iatt (&rsp, preparent, postparent);
+        server4_post_entry_remove (state, &rsp, preparent, postparent);
 
 out:
         rsp.op_ret    = op_ret;
@@ -1002,7 +1002,7 @@ server4_unlink_cbk (call_frame_t *frame, void *cookie, xlator_t *this,
         gf_msg_trace (frame->root->client->bound_xl->name, 0, "%"PRId64": "
                       "UNLINK_CBK %s", frame->root->unique, state->loc.name);
 
-        server4_post_common_2iatt (&rsp, preparent, postparent);
+        server4_post_entry_remove (state, &rsp, preparent, postparent);
 
 out:
         rsp.op_ret    = op_ret;
@@ -1089,8 +1089,8 @@ server4_link_cbk (call_frame_t *frame, void *cookie, xlator_t *this,
                 goto out;
         }
 
-        server4_post_common_3iatt (state, &rsp, inode, stbuf, preparent,
-                                   postparent);
+        server4_post_link (state, &rsp, inode, stbuf, preparent,
+                           postparent);
 
 out:
         rsp.op_ret    = op_ret;
@@ -1353,9 +1353,6 @@ server4_readv_cbk (call_frame_t *frame, void *cookie, xlator_t *this,
         }
 #endif
         dict_to_xdr (xdata, &rsp.xdata);
-        /* TODO: it should be part of dict_to_xdr () */
-        rsp.xdata.xdr_size = xdr_sizeof ((xdrproc_t) xdr_gfx_dict,
-                                         &rsp.xdata) - 12;
 
         if (op_ret < 0) {
                 state = CALL_STATE (frame);
@@ -3870,6 +3867,7 @@ server4_0_writev_vecsizer (int state, ssize_t *readsize, char *base_addr,
                 size = xdr_sizeof ((xdrproc_t) xdr_gfx_write_req,
                                    &write_req);
                 *readsize = size;
+
                 nextstate = SERVER4_0_VECWRITE_READING_HDR;
                 break;
         case SERVER4_0_VECWRITE_READING_HDR:
@@ -3884,7 +3882,7 @@ server4_0_writev_vecsizer (int state, ssize_t *readsize, char *base_addr,
 
                 /* need to round off to proper roof (%4), as XDR packing pads
                    the end of opaque object with '0' */
-                size = roof ((write_req.xdata.xdr_size - 12), 4);
+                size = roof (write_req.xdata.xdr_size, 4);
 
                 *readsize = size;
 
@@ -4334,7 +4332,10 @@ out:
         return ret;
 }
 
-
+extern int
+server3_3_getxattr (rpcsvc_request_t *req);
+extern int
+server3_3_xattrop (rpcsvc_request_t *req);
 
 int
 server4_0_xattrop (rpcsvc_request_t *req)
@@ -5150,7 +5151,6 @@ out:
 }
 
 
-
 int
 server4_0_link (rpcsvc_request_t *req)
 {
@@ -5869,7 +5869,6 @@ rpcsvc_actor_t glusterfs4_0_fop_actors[] = {
         [GFS3_OP_FLUSH]       = { "FLUSH",      GFS3_OP_FLUSH, server4_0_flush, NULL, 0},
         [GFS3_OP_FSYNC]       = { "FSYNC",      GFS3_OP_FSYNC, server4_0_fsync, NULL, 0},
         [GFS3_OP_SETXATTR]    = { "SETXATTR",   GFS3_OP_SETXATTR, server4_0_setxattr, NULL, 0},
-        [GFS3_OP_GETXATTR]    = { "GETXATTR",   GFS3_OP_GETXATTR, server4_0_getxattr, NULL, 0},
         [GFS3_OP_REMOVEXATTR] = { "REMOVEXATTR", GFS3_OP_REMOVEXATTR, server4_0_removexattr, NULL, 0},
         [GFS3_OP_OPENDIR]     = { "OPENDIR",    GFS3_OP_OPENDIR, server4_0_opendir, NULL, 0},
         [GFS3_OP_FSYNCDIR]    = { "FSYNCDIR",   GFS3_OP_FSYNCDIR, server4_0_fsyncdir, NULL, 0},
@@ -5884,7 +5883,6 @@ rpcsvc_actor_t glusterfs4_0_fop_actors[] = {
         [GFS3_OP_FINODELK]    = { "FINODELK",   GFS3_OP_FINODELK, server4_0_finodelk, NULL, 0},
         [GFS3_OP_ENTRYLK]     = { "ENTRYLK",    GFS3_OP_ENTRYLK, server4_0_entrylk, NULL, 0},
         [GFS3_OP_FENTRYLK]    = { "FENTRYLK",   GFS3_OP_FENTRYLK, server4_0_fentrylk, NULL, 0},
-        [GFS3_OP_XATTROP]     = { "XATTROP",    GFS3_OP_XATTROP, server4_0_xattrop, NULL, 0},
         [GFS3_OP_FXATTROP]    = { "FXATTROP",   GFS3_OP_FXATTROP, server4_0_fxattrop, NULL, 0},
         [GFS3_OP_FGETXATTR]   = { "FGETXATTR",  GFS3_OP_FGETXATTR, server4_0_fgetxattr, NULL, 0},
         [GFS3_OP_FSETXATTR]   = { "FSETXATTR",  GFS3_OP_FSETXATTR, server4_0_fsetxattr, NULL, 0},
@@ -5907,11 +5905,12 @@ rpcsvc_actor_t glusterfs4_0_fop_actors[] = {
         [GFS3_OP_COMPOUND]    =  {"COMPOUND",     GFS3_OP_COMPOUND,     server4_0_compound,     NULL, 0, DRC_NA},
         [GFS3_OP_WRITE]       = { "WRITE",      GFS3_OP_WRITE, server4_0_writev, server4_0_writev_vecsizer, 0},
         [GFS3_OP_READ]        = { "READ",       GFS3_OP_READ, server4_0_readv, NULL, 0},
-
-        /* Need to fix some issues in new version. Use old XDR for now */
         [GFS3_OP_READDIRP]    = { "READDIRP",   GFS3_OP_READDIRP, server4_0_readdirp, NULL, 0},
-};
 
+        /* TODO: check this out */
+        [GFS3_OP_XATTROP]     = { "XATTROP",    GFS3_OP_XATTROP, server3_3_xattrop, NULL, 0},
+        [GFS3_OP_GETXATTR]    = { "GETXATTR",   GFS3_OP_GETXATTR, server3_3_getxattr, NULL, 0},
+};
 
 struct rpcsvc_program glusterfs4_0_fop_prog = {
         .progname  = "GlusterFS 4.x v1",

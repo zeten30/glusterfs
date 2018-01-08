@@ -63,7 +63,7 @@
 
 #define SERVER4_COMMON_RSP_CLEANUP(rsp, fop, i)                         \
         do {                                                            \
-                compound_rsp_v2  *this_rsp       = NULL;                \
+                compound_rsp_v2  *this_rsp = NULL;                      \
                 this_rsp = &rsp->compound_rsp_array.compound_rsp_array_val[i]; \
                 gfx_common_rsp  *_this_rsp = &CPD4_RSP_FIELD(this_rsp, fop); \
                                                                         \
@@ -72,7 +72,7 @@
 
 #define SERVER4_FOP_RSP_CLEANUP(rsp, fop, i, rsp_type)                  \
         do {                                                            \
-                compound_rsp_v2        *this_rsp       = NULL;          \
+                compound_rsp_v2        *this_rsp = NULL;                \
                 this_rsp = &rsp->compound_rsp_array.compound_rsp_array_val[i]; \
                 gfx_##rsp_type##_rsp  *_this_rsp = &CPD4_RSP_FIELD(this_rsp, fop); \
                                                                         \

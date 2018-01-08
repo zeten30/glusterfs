@@ -5191,7 +5191,7 @@ server_populate_compound_response_v2 (xlator_t *this, gfx_compound_rsp *rsp,
 
                 dict_to_xdr (this_args_cbk->xdata, &rsp_args->xdata);
                 if (!this_args_cbk->op_ret) {
-                        server4_post_common_2iatt (rsp_args,
+                        server4_post_entry_remove (state, rsp_args,
                                                    &this_args_cbk->preparent,
                                                    &this_args_cbk->postparent);
                 }
@@ -5988,7 +5988,7 @@ server_get_compound_resolve_v2 (server_state_t *state, gfx_compound_req *req)
         }
         case GF_FOP_FSETATTR:
         {
-                gfx_fsetattr_req this_req = { {0,}};
+                gfx_fsetattr_req this_req = { {0,} };
 
                 this_req = array[i].compound_req_v2_u.compound_fsetattr_req;
 
@@ -6141,7 +6141,7 @@ server_compound_rsp_cleanup_v2 (gfx_compound_rsp *rsp, compound_args_cbk_t *args
                         SERVER4_FOP_RSP_CLEANUP (rsp, fsync, i, common_2iatt);
                         break;
                 case GF_FOP_OPENDIR:
-                        SERVER4_FOP_RSP_CLEANUP (rsp, opendir, i, opendir);
+                        SERVER4_FOP_RSP_CLEANUP (rsp, opendir, i, open);
                         break;
                 case GF_FOP_CREATE:
                         SERVER4_FOP_RSP_CLEANUP (rsp, create, i, create);

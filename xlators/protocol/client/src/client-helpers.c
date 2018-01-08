@@ -3144,12 +3144,12 @@ client_process_response_v2 (call_frame_t *frame, xlator_t *this,
         }
         case GF_FOP_OPENDIR:
         {
-                gfx_opendir_rsp *tmp_rsp = NULL;
+                gfx_open_rsp *tmp_rsp = NULL;
                 tmp_rsp = &this_rsp->compound_rsp_v2_u.compound_opendir_rsp;
 
                 xdr_to_dict (&tmp_rsp->xdata, &xdata);
 
-                CLIENT4_POST_FOP_TYPE (opendir, opendir, this_rsp, this_args_cbk,
+                CLIENT4_POST_FOP_TYPE (opendir, open, this_rsp, this_args_cbk,
                                       local->fd, xdata);
                 if (-1 != this_args_cbk->op_ret)
                         ret = client_add_fd_to_saved_fds (this, local->fd,
