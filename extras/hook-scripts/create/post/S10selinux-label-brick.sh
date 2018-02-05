@@ -37,16 +37,17 @@ set_brick_labels()
   volname=${1}
 
   # grab the path for each local brick
-  brickdirs=$(grep '^path=' /var/lib/glusterd/vols/${volname}/bricks/* | cut -d= -f 2 | sort -u)
+  brickpath="/var/lib/glusterd/vols/${volname}/bricks/*"
+  brickdirs=$(grep '^path=' ${brickpath} | cut -d= -f 2 | sort -u)
 
   for b in ${brickdirs}; do
     # Add a file context for each brick path and associate with the
     # glusterd_brick_t SELinux type.
     pattern="${b}\(/.*\)?"
-    semanage fcontext --add -t glusterd_brick_t -r s0 ${pattern}
+    semanage fcontext --add -t glusterd_brick_t -r s0 "${pattern}"
 
     # Set the labels on the new brick path.
-    restorecon -R ${b}
+    restorecon -R "${b}"
   done
 }
 
@@ -56,6 +57,6 @@ SELINUX_STATE=$(which getenforce && getenforce)
 parse_args "$@"
 [ -z "${VOL}" ] && exit 1
 
-set_brick_labels ${VOL}
+set_brick_labels "${VOL}"
 
 exit 0
